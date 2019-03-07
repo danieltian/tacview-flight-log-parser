@@ -1,0 +1,108 @@
+<header>
+  <style>
+    #fileSelector {
+      display: block;
+      margin-bottom: 2em;
+    }
+
+    #output {
+      height: 500px;
+      width: 500px;
+    }
+  </style>
+</header>
+
+<body>
+  <input id="fileSelector" type="file" accept=".csv" multiple>
+  <textarea id="output"></textarea>
+
+  <script>
+    let fileSelector = document.getElementById('fileSelector')
+    let output = document.getElementById('output')
+
+    let redKilledBlue = {}
+    let blueKilledRed = {}
+    let blueOnBlue = {}
+    let redOnRed = {}
+    let redAiKilledBlue = {}
+    let blueAiKilledRed = {}
+
+    fileSelector.addEventListener('change', () => {
+      Array.prototype.forEach.call(fileSelector.files, (file) => {
+        let reader = new FileReader()
+
+        reader.addEventListener('load', (e) => {
+          let array = processCsvToArray(reader.result)
+          processArray(array)
+        })
+
+        reader.readAsText(file)
+      })
+
+      setTimeout(() => {
+      console.log('red killed blue', redKilledBlue)
+      console.log('blue killed red', blueKilledRed)
+      console.log('blue on blue', blueOnBlue)
+      console.log('red on red', redOnRed)
+      
+      console.log('total red killed blue', printTotal(redKilledBlue))
+      console.log('total blue killed red', printTotal(blueKilledRed))
+      console.log('total blue on blue', printTotal(blueOnBlue))
+      console.log('total red on red', printTotal(redOnRed))
+      }, 1000)
+    })
+
+    function printTotal(object) {
+      return Object.values(object).reduce((sum, current) => sum = sum + current)
+    }
+
+    function processCsvToArray(result) {
+      let lines = result.split('\n')
+      let header = lines[0].split(',')
+
+      lines.shift()
+
+      let array = lines.map((line) => {
+        let dataObject = {}
+        let cells = line.split(',')
+
+        cells.forEach((cell, index) => dataObject[header[index]] = cell)
+        return dataObject
+      })
+
+      return array
+    }
+
+    function increment(object, key) {
+      if (!object[key]) {
+        object[key] = 1
+      }
+      else {
+        object[key]++
+      }
+    }
+
+    function processArray(array) {
+      let destroyed = array.filter((x) => x.Event == 'HasBeenHitBy' && !!x['Primary Object Pilot'] && !!x['Relevant Object Pilot'])
+      console.log(destroyed)
+
+      destroyed.forEach((event) => {
+        if (event['Primary Object Coalition'] == 'Enemies' && event['Relevant Object Coalition'] == 'Allies') {
+          increment(redKilledBlue, event['Secondary Object Name'])
+        }
+        else if (event['Primary Object Coalition'] == 'Allies' && event['Secondary Object Coalition'] == 'Enemies') {
+          increment(blueKilledRed, event['Secondary Object Name'])
+        }
+        else if (event['Primary Object Coalition'] == 'Enemies' && event['Secondary Object Coalition'] == 'Enemies') {
+          increment(blueOnBlue, event['Secondary Object Name'])
+        }
+        else if (event['Primary Object Coalition'] == 'Allies' && event['Secondary Object Coalition'] == 'Allies') {
+          increment(redOnRed, event['Secondary Object Name'])
+        }
+        else {
+          console.log('not covered', event)
+        }
+      })
+    }
+  </script>
+</body>
