@@ -1,0 +1,30 @@
+{
+  "name": "tacview-flight-log-parser",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "webpack-dev-server"
+  },
+  "repository": "git@github.com:Danieltian/tacview-flight-log-parser.git",
+  "author": "Daniel Tian <dftian@gmail.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "css-loader": "^2.1.1",
+    "eslint": "^5.15.1",
+    "eslint-loader": "^2.1.2",
+    "eslint-plugin-vue": "^5.2.2",
+    "fast-xml-parser": "^3.12.14",
+    "html-webpack-plugin": "^3.2.0",
+    "pug": "^2.0.3",
+    "pug-plain-loader": "^1.0.0",
+    "stylus": "^0.54.5",
+    "stylus-loader": "^3.0.2",
+    "vue": "^2.6.8",
+    "vue-loader": "^15.7.0",
+    "vue-template-compiler": "^2.6.8",
+    "vuex": "^3.1.0",
+    "webpack": "^4.29.6",
+    "webpack-cli": "^3.2.3",
+    "webpack-dev-server": "^3.2.1"
+  }
+}
