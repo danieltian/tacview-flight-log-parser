@@ -1,64 +1,39 @@
 <template lang="pug">
   #app
     FileSelector
-    table.table.is-bordered.is-striped.is-hoverable.is-fullwidth.is-narrow
-      thead
-        tr
-          th Time
-          th P ID
-          th P Name
-          th P Pilot
-          th P Coal
-          th P Type
-          th P Grp
-          th P Country
-          th P Parent
 
-          th S ID
-          th S Name
-          th S Pilot
-          th S Coal
-          th S Type
-          th S Grp
-          th S Country
-          th S Parent
+    //- Airbases
 
-          th Pt ID
-          th Pt Name
-          th Pt Pilot
-          th Pt Coal
-          th Pt Type
-          th Pt Grp
-          th Pt Country
-          
-          th Apt ID
-          th Apt Name
-      tbody
-        Entity(v-for="entity in debug" :entity="entity" :key="entity.PrimaryObject.ID")
-
-
-    //- table.table.is-bordered.is-striped.is-hoverable.is-narrow
-    //-   thead
-    //-     tr
-    //-       th Name
-    //-       th Spawns
-    //-       th(colspan=2) Takeoffs
-    //-       th(colspan=2) Landings
-    //-   tbody
-    //-     Airbase(v-for="airbase in airbases" :airbase="airbase" :key="airbase.id")
+    .wrapper
+      ul
+        li.entity(v-for="entity in entities" :class="{ selected: entity == selectedEntity }" :key="entity.ID" @click="selectEntity(entity)") {{ entity.ID }}: {{ entity.Name }} - {{ entity.Pilot }}
+      
+      textarea {{ JSON.stringify(selectedEntity, undefined, 2) }}
 </template>
 
 <script>
   import { mapState } from 'vuex'
   import FileSelector from './FileSelector'
-  import Airbase from './Airbase'
+  import Airbases from './Airbases'
   import Entity from './Entity'
 
   export default {
-    components: { FileSelector, Airbase, Entity },
+    components: { FileSelector, Airbases, Entity },
+
+    data() {
+      return {
+        selectedEntity: undefined
+      }
+    },
 
     computed: {
-      ...mapState(['airbases', 'entities', 'debug'])
+      ...mapState(['entities'])
+    },
+
+    methods: {
+      selectEntity(entity) {
+        this.selectedEntity = entity
+      }
     }
   }
 </script>
@@ -66,4 +41,26 @@
 <style lang="stylus">
   body
     padding: 2em
+  
+  .wrapper
+    display: flex
+    width: 100%
+  
+  ul
+    height: 800px
+    overflow: auto
+    margin-right: 50px
+
+  .entity
+    cursor: pointer
+
+    &:hover
+      background-color: yellow
+    
+    &.selected
+      background-color: red
+
+  textarea
+    width: 500px
+    height: 800px
 </style>
