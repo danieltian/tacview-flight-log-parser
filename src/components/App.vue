@@ -2,11 +2,11 @@
   #app
     FileSelector
 
-    //- Airbases
+    Airbases
 
     .wrapper
       ul
-        li.entity(v-for="entity in entities" :class="{ selected: entity == selectedEntity }" :key="entity.ID" @click="selectEntity(entity)") {{ entity.ID }}: {{ entity.Name }} - {{ entity.Pilot }}
+        li.entity(v-for="entity in categories && categories.Aircraft" :class="{ selected: entity == selectedEntity }" :key="entity.ID" @click="selectEntity(entity)") {{ entity.ID }}: {{ entity.Name }} - {{ entity.Pilot }}
       
       textarea {{ JSON.stringify(selectedEntity, undefined, 2) }}
 </template>
@@ -27,7 +27,7 @@
     },
 
     computed: {
-      ...mapState(['entities'])
+      ...mapState(['entities', 'categories'])
     },
 
     methods: {

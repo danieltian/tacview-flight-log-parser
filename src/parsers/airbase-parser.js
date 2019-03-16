@@ -1,76 +1,106 @@
-const knownAirbases = ['Nalchik', 'Stennis', 'Sochi', 'Mineralnye Vody', 'Bomber Group']
+import Statistic from '../models/Statistic'
 
-function guessAirbase(event) {
-  let airbaseName = event.PrimaryObject.Group
+const knownAirbases = ['Nalchik', 'Stennis', 'Sochi', 'Mineralnye Vody', 'Krasnodar Center', 'Maykop-Khanskaya', 'Maykop']
 
-  for (let known of knownAirbases) {
-    if (airbaseName.startsWith(known)) {
-      airbaseName = known
-      break
+function getAirbaseName(event, aircraft, shouldGuessAirbase = true) {  
+  let location = event.location
+  let name = 'Unknown'
+
+  if (!location) {
+    console.log('no location', aircraft)
+    if (shouldGuessAirbase) {
+      for (let known of knownAirbases) {
+        if (aircraft.Group.startsWith(known)) {
+          name = known
+          break
+        }
+      }
+    }
+  }
+  else {
+    name = location.Name
+
+    if (name == 'FARP') {
+      name = `FARP (ID: ${location.ID})`
     }
   }
 
-  return airbaseName
+  return name
 }
 
 const airbaseParser = {
-  airbases: {},
-  aircraftNames: new Set(),
-  debug: {},
+  process(data) {
+    let airbaseEvents = new Statistic()
 
-  setup(eventProcessor) {
-    eventProcessor.addEventListener('HasEnteredTheArea', (event) => {
-      if (['Aircraft', 'Helicopter'].includes(event.PrimaryObject.Type)) {
-        // Either this is not a player, or it's an AI unit that looks like a player. We'll ignore these events.
-        if (!event.PrimaryObject.Pilot || event.PrimaryObject.Group.includes('INTERCEPT')) {
-          return
-        }
-  
-        // If the unit spawned at an airfield, it will have an Airport. If it spawned at a FARP or ship, it will
-        // have a SecondaryObject.
-        let object = event.SecondaryObject || event.Airport
-
-        if (!object) {
-          let guess = guessAirbase(event)
-          object = {
-            ID: guess,
-            Name: guess
-          }
-        }
-        
-        let airbase = this.airbases[object.Name]
-
-        if (object.ID == 'Unknown') {
-          this.debug[event.PrimaryObject.ID] = event
-        }
-  
-        // If the airbase doesn't exist, create it with the data we need to track.
-        if (!airbase) {
-          let name = (object.Name == 'FARP') ? `FARP (ID: ${object.ID})` : object.Name
-
-          airbase = Object.assign({}, object, {
-            spawns: {},
-            spawnCount: 0,
-            Name: name
-          })
-  
-          this.airbases[airbase.Name] = airbase
-        }
-  
-        this.aircraftNames.add(event.PrimaryObject.Name)
-        airbase.spawns[event.PrimaryObject.Name] = (airbase.spawns[event.PrimaryObject.Name] || 0) + 1
-        airbase.spawnCount = airbase.spawnCount + 1
+    // type (ai, player) -> side (allied, enemies) -> airbase -> spawns/takeoffs/landings/despawns
+    for (let aircraft of data.categories.Aircraft) {
+      let isAiUnit = (!aircraft.Pilot || aircraft.Group.startsWith('RED') || aircraft.Group.startsWith('BLUE'))
+      let type = isAiUnit ? 'ai' : 'players'
+      let side = aircraft.Coalition
+      
+      if (aircraft.HasEnteredTheArea) {
+        let airbaseName = getAirbaseName(aircraft.HasEnteredTheArea, aircraft)
+        airbaseEvents.increment(`${type}.${side}.${airbaseName}.spawns`)
       }
-    })
-
-    eventProcessor.addEventListener('getResults', () => {
-      return {
-        airbases: this.airbases,
-        aircraftNames: this.aircraftNames,
-        debug: this.debug
+      if (aircraft.HasTakenOff.length) {
+        aircraft.HasTakenOff.forEach((takeoff, index) => {
+          let shouldGuessAirbase = (index ==  0)
+          let airbaseName = getAirbaseName(takeoff, aircraft, shouldGuessAirbase)
+          airbaseEvents.increment(`${type}.${side}.${airbaseName}.takeoffs`)
+        })
       }
-    })
+      if (aircraft.HasLanded.length) {
+        aircraft.HasLanded.forEach((landing) => {
+          let airbaseName = getAirbaseName(landing, aircraft, false)
+          airbaseEvents.increment(`${type}.${side}.${airbaseName}.landings`)
+        })
+      }
+      if (aircraft.HasLeftTheArea) {
+        let airbaseName = getAirbaseName(aircraft.HasLeftTheArea, aircraft, false)
+        airbaseEvents.increment(`${type}.${side}.${airbaseName}.despawns`)
+      }
+    }
+
+    return { airbaseEvents }
   }
+
+  // process(data) {
+  //   let airbases = new Statistic()
+    
+  //   // type (ai, player) -> side (allied, enemies) -> airbase -> aircraft -> spawns/takeoffs/landings/despawns
+  //   for (let aircraft of data.categories.Aircraft) {
+  //     let isAiUnit = (!aircraft.Pilot || aircraft.Group.startsWith('RED') || aircraft.Group.startsWith('BLUE'))
+  //     let type = isAiUnit ? 'ai' : 'players'
+  //     let side = aircraft.Coalition
+  //     let aircraftName = aircraft.Name
+
+  //     if (aircraft.HasEnteredTheArea) {
+  //       let airbaseName = getAirbaseName(aircraft.HasEnteredTheArea, aircraft)
+  //       airbases.addToArray(`${type}.${side}.${airbaseName}.${aircraftName}.spawns`, aircraft.HasEnteredTheArea)
+  //     }
+  //     if (aircraft.HasTakenOff.length) {
+  //       aircraft.HasTakenOff.forEach((takeoff, index) => {
+  //         let shouldGuessAirbase = (index == 0)
+  //         let airbaseName = getAirbaseName(takeoff, aircraft, shouldGuessAirbase)
+  //         airbases.addToArray(`${type}.${side}.${airbaseName}.${aircraftName}.takeoffs`, takeoff)
+  //       })
+  //     }
+  //     if (aircraft.HasLanded.length) {
+  //       aircraft.HasLanded.forEach((landing) => {
+  //         let airbaseName = getAirbaseName(landing, aircraft, false)
+  //         airbases.addToArray(`${type}.${side}.${airbaseName}.${aircraftName}.landings`, landing)
+  //       })
+  //     }
+  //     if (aircraft.HasLeftTheArea) {
+  //       let airbaseName = getAirbaseName(aircraft.HasLeftTheArea, aircraft, false)
+  //       airbases.addToArray(`${type}.${side}.${airbaseName}.${aircraftName}.despawns`, aircraft.HasLeftTheArea)
+  //     }
+  //   }
+
+  //   console.log(airbases)
+
+  //   return { airbases }
+  // }
 }
 
 export default airbaseParser

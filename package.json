@@ -10,6 +10,7 @@
   "license": "MIT",
   "devDependencies": {
     "css-loader": "^2.1.1",
+    "dexie": "^2.0.4",
     "eslint": "^5.15.1",
     "eslint-loader": "^2.1.2",
     "eslint-plugin-vue": "^5.2.2",

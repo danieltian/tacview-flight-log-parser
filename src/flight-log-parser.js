@@ -1,9 +1,7 @@
 import xmlParser from 'fast-xml-parser'
-import eventProcessor from './event-processor'
-import airbases from './parsers/airbase-parser'
 import Entity from './models/Entity'
-
-airbases.setup(eventProcessor)
+import airbaseParser from './parsers/airbase-parser'
+import dexie from 'dexie'
 
 const FlightLogParser = {
   parse(fileContents) {
@@ -44,8 +42,10 @@ const FlightLogParser = {
       // ---------------------------------------------------------------------------------------------------------------
       if (event.Action == 'HasEnteredTheArea') {
         // If the entity already exists, display an error message. There should never be an existing entity that has
-        // entered the area. NOTE: Check if this is true across different Tacviews.
-        if (entity) {
+        // entered the area unless it's a parachutist. Tacview will first record the parachutist as being fired by
+        // an aircraft, and then send a HasEnteredTheArea event for it. This seems to only apply to parachutists.
+        // NOTE: Check if this is true across different Tacviews.
+        if (entity && entity.Type !== 'Parachutist') {
           console.log('ERROR: HasEnteredTheArea but already exists, existing:', entity, 'event:', event)
         }
         else {
@@ -156,7 +156,7 @@ const FlightLogParser = {
         let munition = getEntity(event.SecondaryObject)
         if (!munition) {
           munition = createEntity(event.SecondaryObject)
-          console.log('WARN: HasBeenHitBy but the munition does not exist, event:', event)
+          //console.log('WARN: HasBeenHitBy but the munition does not exist, event:', event)
         }
 
         let parent = getEntity(event.ParentObject)
@@ -199,6 +199,11 @@ const FlightLogParser = {
       }
     })
     
+
+    console.log('results before', results)
+    Object.assign(results, airbaseParser.process(results))
+
+    console.log('results after', results)
     return results
   }
 }

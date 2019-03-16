@@ -3,9 +3,31 @@
     table.table.is-bordered.is-striped.is-hoverable.is-narrow
       thead
         th Name
+        th Spawns
       tbody
-        tr(v-for="airbase in redPlayerAirbaseNames" :key="airbase.ID")
-          td {{ airbase }}
+        tr(v-for="airbase in airbases" :key="airbase.ID")
+          td {{ airbase.Name }}
+          td.spawns {{ airbase.spawnCount }}
+    
+    button.button(@click="flipTable") Flip
+    table.table.is-bordered.is-hoverable.is-narrow(v-if="!isFlipped")
+      thead
+        th Airbase
+        th.name(v-for="name in aircraftNames" :key="name") {{ shortName(name) }}
+      tbody
+        tr(v-for="airbase in airbases" :key="airbase.ID")
+          td {{ airbase.Name }}
+          td.count(v-for="name in aircraftNames" :key="`${airbase.ID}:${name}`") {{ airbase.spawns[name] }}
+    table.table.is-bordered.is-hoverable.is-narrow(v-else)
+      thead
+        th Aircraft
+        th.name(v-for="airbase in airbases" :key="airbase.ID")
+          .wrapper
+            .wrapper2 {{ airbase.Name }}
+      tbody
+        tr(v-for="name in aircraftNames" :key="name")
+          td.name {{ shortName(name) }}
+          td.count(v-for="airbase in airbases" :key="airbase.ID") {{ airbase.spawns[name] }}
 </template>
 
 <script>
@@ -46,18 +68,14 @@
     },
 
     computed: {
-      ...mapState(['airbaseEvents']),
+      ...mapState(['airbases']),
 
-      redPlayerEvents() {
-        return this.airbaseEvents && this.airbaseEvents.get('players.Allies')
+      playersAlliedStats() {
+        return this.airbases.get('players.Allies')
       },
 
-      redPlayerAirbaseNames() {
-        return this.airbaseEvents && Object.keys(this.airbaseEvents.get('players.Allies'))
-      },
-
-      bluePlayerEvents() {
-        return this.airbaseEvents && this.airbaseEvents.get('players.Enemies')
+      eventNames() {
+        return this.playersAlliedStats
       }
     },
 
