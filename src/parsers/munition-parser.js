@@ -28,7 +28,7 @@ function getAirbaseName(event, aircraft, shouldGuessAirbase = true) {
   return name
 }
 
-const airbaseParser = {
+const munitionParser = {
   process(data) {
     let airbaseEvents = new Statistic()
 
@@ -63,44 +63,6 @@ const airbaseParser = {
 
     return { airbaseEvents }
   }
-
-  // process(data) {
-  //   let airbases = new Statistic()
-    
-  //   // type (ai, player) -> side (allied, enemies) -> airbase -> aircraft -> spawns/takeoffs/landings/despawns
-  //   for (let aircraft of data.categories.Aircraft) {
-  //     let isAiUnit = (!aircraft.Pilot || aircraft.Group.startsWith('RED') || aircraft.Group.startsWith('BLUE'))
-  //     let type = isAiUnit ? 'ai' : 'players'
-  //     let side = aircraft.Coalition
-  //     let aircraftName = aircraft.Name
-
-  //     if (aircraft.HasEnteredTheArea) {
-  //       let airbaseName = getAirbaseName(aircraft.HasEnteredTheArea, aircraft)
-  //       airbases.addToArray(`${type}.${side}.${airbaseName}.${aircraftName}.spawns`, aircraft.HasEnteredTheArea)
-  //     }
-  //     if (aircraft.HasTakenOff.length) {
-  //       aircraft.HasTakenOff.forEach((takeoff, index) => {
-  //         let shouldGuessAirbase = (index == 0)
-  //         let airbaseName = getAirbaseName(takeoff, aircraft, shouldGuessAirbase)
-  //         airbases.addToArray(`${type}.${side}.${airbaseName}.${aircraftName}.takeoffs`, takeoff)
-  //       })
-  //     }
-  //     if (aircraft.HasLanded.length) {
-  //       aircraft.HasLanded.forEach((landing) => {
-  //         let airbaseName = getAirbaseName(landing, aircraft, false)
-  //         airbases.addToArray(`${type}.${side}.${airbaseName}.${aircraftName}.landings`, landing)
-  //       })
-  //     }
-  //     if (aircraft.HasLeftTheArea) {
-  //       let airbaseName = getAirbaseName(aircraft.HasLeftTheArea, aircraft, false)
-  //       airbases.addToArray(`${type}.${side}.${airbaseName}.${aircraftName}.despawns`, aircraft.HasLeftTheArea)
-  //     }
-  //   }
-
-  //   console.log(airbases)
-
-  //   return { airbases }
-  // }
 }
 
-export default airbaseParser
+export default munitionParser

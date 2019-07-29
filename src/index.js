@@ -16,15 +16,21 @@ const store = new Vuex.Store({
     loadFiles({ commit }, files) {
       files = Array.from(files)
 
-      files.forEach((file) => {
+      let data = { entities: {}, categories: {}, files: files }
+
+      let promises = files.map((file) => {
         let reader = new FileReader()
         reader.readAsText(file)
 
-        reader.addEventListener('load', () => {
-          let data = parser.parse(reader.result)
-          commit('setData', data)
+        return new Promise((resolve) => {
+          reader.addEventListener('load', () => {
+            parser.parse(reader.result, data)
+            resolve(data)
+          })
         })
       })
+
+      Promise.all(promises).then(() => store.commit('setData', data))
     }
   }
 })

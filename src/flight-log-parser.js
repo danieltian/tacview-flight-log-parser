@@ -1,10 +1,10 @@
 import xmlParser from 'fast-xml-parser'
 import Entity from './models/Entity'
 import airbaseParser from './parsers/airbase-parser'
-import dexie from 'dexie'
+//import dexie, { Dexie } from 'dexie'
 
 const FlightLogParser = {
-  parse(fileContents) {
+  parse(fileContents, storeData) {
     let options = {
       attributeNamePrefix: '',
       ignoreAttributes: false,
@@ -12,27 +12,34 @@ const FlightLogParser = {
     }
 
     let data = xmlParser.parse(fileContents, options)
+    let tacviewId = data.TacviewDebriefing.FlightRecording.RecordingTime
     let events = data.TacviewDebriefing.Events.Event || []
 
-    let results = {
-      entities: {},
-      categories: {}
+    let results = storeData
+
+    function getId(object) {
+      return `${tacviewId}:${object.ID}`
     }
 
     function getEntity(object) {
-      let entity = results.entities[object && object.ID]
+      let entity = results.entities[object && `${tacviewId}:${object.ID}`]
       return entity
     }
 
     function createEntity(object) {
       let entity = new Entity(object)
-      results.entities[object.ID] = entity
-      
+
+      results.entities[`${tacviewId}:${object.ID}`] = entity
       results.categories[entity.Type] = results.categories[entity.Type] || []
       results.categories[entity.Type].push(entity)
       
       return entity
     }
+
+    // -----------------------------------------------------------------------------------------------------------------
+    // Dexie DB setup
+    // -----------------------------------------------------------------------------------------------------------------
+    //const db = new Dexie('test')
 
     events.forEach((event) => {
       let entity = getEntity(event.PrimaryObject)
@@ -73,14 +80,14 @@ const FlightLogParser = {
           destroyedBy.addEvent({
             event: 'HasDestroyed',
             time: event.Time,
-            destroyedId: entity.ID
+            destroyedId: getId(entity)
           })
         }
 
         entity.addEvent({
           event: event.Action,
           time: event.Time,
-          destroyedById: (destroyedBy && destroyedBy.ID) || null
+          destroyedById: (destroyedBy && getId(destroyedBy)) || null
         })
       }
       // ---------------------------------------------------------------------------------------------------------------
@@ -134,14 +141,14 @@ const FlightLogParser = {
           event: event.Action,
           time: event.Time,
           occurrences: event.Occurrences,
-          munitionId: munition.ID || null
+          munitionId: getId(munition) || null
         })
 
         munition.addEvent({
           event: 'HasBeenFired',
           time: event.Time,
           occurrences: event.Occurrences,
-          firedById: entity.ID
+          firedById: getId(entity)
         })
       }
       // ---------------------------------------------------------------------------------------------------------------
@@ -164,22 +171,22 @@ const FlightLogParser = {
           parent.addEvent({
             event: 'HasHit',
             time: event.Time,
-            targetId: entity.ID
+            targetId: getId(entity)
           })
         }
 
         entity.addEvent({
           event: event.Action,
           time: event.Time,
-          munitionId: munition.ID,
-          parentId: (parent && parent.ID) || null
+          munitionId: getId(munition),
+          parentId: (parent && getId(parent)) || null
         })
 
         munition.addEvent({
           event: 'HasHit',
           time: event.Time,
-          targetId: entity.ID,
-          parentId: (parent && parent.ID) || null
+          targetId: getId(entity),
+          parentId: (parent && getId(parent)) || null
         })
       }
       // ---------------------------------------------------------------------------------------------------------------
@@ -200,10 +207,11 @@ const FlightLogParser = {
     })
     
 
-    console.log('results before', results)
-    Object.assign(results, airbaseParser.process(results))
+    //console.log('results before', results)
+    //Object.assign(results, airbaseParser.process(results))
 
-    console.log('results after', results)
+    //console.log('results after', results)
+    window.results = results
     return results
   }
 }

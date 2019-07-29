@@ -2,7 +2,6 @@ const path = require('path')
 const { VueLoaderPlugin } = require('vue-loader')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const { HotModuleReplacementPlugin } = require('webpack')
-const { spawn, exec } = require('child_process')
 
 module.exports = (env) => {
   return {
